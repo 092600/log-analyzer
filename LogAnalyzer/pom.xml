@@ -16,6 +16,13 @@
 
 
     <dependencies>
+        <!-- lombok 라이브러리 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.6</version>
+        </dependency>
+
         <!--Gson-->
         <dependency>
             <groupId>com.google.code.gson</groupId>

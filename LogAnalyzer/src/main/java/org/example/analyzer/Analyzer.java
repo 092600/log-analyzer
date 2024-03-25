@@ -6,10 +6,20 @@ import java.util.Map;
 
 public class Analyzer {
     public Map<Integer, Integer> analyzeStringFromOnSec(List<String> logs, String searchString) {
+        logs.stream().filter((log) -> log.contains(searchString))
+                .map((log) -> log.substring(0,21))
+                .map((log) -> log.substring(log.length()-10, log.length()-2))
+                .forEach(System.out::println);
+//                .map((log) -> log.substring(log.length()-10, log.length()-2))
         return logs.stream().filter((log) -> log.contains(searchString))
                 .map((log) -> log.substring(0,21))
                 .map((log) -> log.substring(log.length()-10, log.length()-2))
                 .collect(HashMap::new, (map, key) -> map.merge(Integer.parseInt(String.join("", key.split(":"))), 1, Integer::sum), HashMap::putAll);
+
+//        return logs.stream().filter((log) -> log.contains(searchString))
+//                .map((log) -> log.substring(0,21))
+//                .map((log) -> log.substring(log.length()-10, log.length()-2))
+//                .collect(HashMap::new, (map, key) -> map.merge(Integer.parseInt(String.join("", key.split(":")), 1, Integer::sum), HashMap::putAll);
     }
 
 
