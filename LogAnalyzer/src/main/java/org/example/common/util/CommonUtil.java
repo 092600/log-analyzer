@@ -10,34 +10,21 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
-import static org.example.common.constants.Constants.NEW_AGENT_ROOT_PATH;
-import static org.example.common.constants.Constants.NEW_AGENT_ROOT_PATH2;
+import static org.example.common.constants.Constants.*;
 
 public class CommonUtil {
 
     public static Scanner scanner = new Scanner(System.in);
-    public static void createAgentLogDirectories(int cnt, String... directoryName) {
-        for (int i = 1; i <= cnt; i++) {
-            String num = i < 10 ? String.format("0%s",i) : String.valueOf(i);
-
-//            File file = new File(String.format(String.join("/", Constants.ROOT_PATH, directoryName, String.format("%d%s", directoryName, num))));
-//            if (!file.exists()) {
-//                if (file.mkdir()) {
-//                    System.out.println(String.format("%s file created", num));
-//                }
-//            }
-
-        }
-    }
 
     public static List<File> getAgentLogDirectories() {
-        File rootDir = new File(NEW_AGENT_ROOT_PATH2);
-        return Arrays.stream(rootDir.listFiles())
-                .filter((file) -> file.exists() && file.isDirectory() && file.getName().contains("agt"))
+        File rootDir = new File(NEW_AGENT_ROOT_PATH);
+        return Arrays.stream(Objects.requireNonNull(rootDir.listFiles()))
+                .filter(File::isFile)
+                .filter((file) -> !CommonUtil.exclusiveExtension(file.getName()).startsWith("."))
                 .collect(Collectors.toList());
     }
 
@@ -60,20 +47,16 @@ public class CommonUtil {
     public static String getInputText() {
         return scanner.next();
     }
-    public static List<File> getAgentTopLogDirectories() {
-        File rootDir = new File("/Users/simjeonghun/차세대 로그/cpu 사용량");
-        return Arrays.stream(rootDir.listFiles()).filter((file) -> file.exists() && file.isDirectory() && file.getName().contains("agt")).collect(Collectors.toList());
-    }
-
     public static List<File> getAgentThreadsUsageTopLogDirectories() {
-        File rootDir = new File("/Users/simjeonghun/차세대 로그/test");
-        return Arrays.stream(rootDir.listFiles()).filter((file) -> file.exists() && file.isDirectory() && file.getName().contains("agt")).collect(Collectors.toList());
+        File rootDir = new File(TOP_ROOT_PATH);
+        return Arrays.stream(Objects.requireNonNull(rootDir.listFiles()))
+                            .collect(Collectors.toList());
     }
 
-    public static List<File> getMessageApiServerLogDirectories() {
-        File rootDir = new File("/Users/simjeonghun/차세대 로그/MessageApiServerLogs");
-        return Arrays.stream(rootDir.listFiles()).filter((file) -> file.exists() && file.isDirectory() && file.getName().contains("messageApiServer")).collect(Collectors.toList());
-    }
+//    public static List<File> getMessageApiServerLogDirectories() {
+//        File rootDir = new File("/Users/simjeonghun/차세대 로그/MessageApiServerLogs");
+//        return Arrays.stream(rootDir.listFiles()).filter((file) -> file.exists() && file.isDirectory() && file.getName().contains("messageApiServer")).collect(Collectors.toList());
+//    }
 
 
     public static List<String> readLinesFromFile(String filePath) throws IOException {
@@ -81,65 +64,29 @@ public class CommonUtil {
         return Files.readAllLines(path, StandardCharsets.UTF_8);
     }
 
-    public static void generateCsv(String fileName, Map<Integer, Integer> fetchCountMap, Map<Integer, Integer> sendCountMap, Map<Integer, Integer> responseCountMap) {
-        System.out.println("fileName : " + fileName);
-        try (FileWriter writer = new FileWriter(fileName)) {
-            // Write CSV header
-            writer.append("Time,Fetch Count,Send Count,Response Count\n");
-
-            Set<Integer> fetchKeySet = sendCountMap.keySet();
-            Set<Integer> sendKeySet = sendCountMap.keySet();
-            Set<Integer> responseKeySet = sendCountMap.keySet();
-
-            Set<Integer> mergedKeySet = new HashSet<Integer>(fetchKeySet);
-            mergedKeySet.addAll(sendKeySet);
-            mergedKeySet.addAll(responseKeySet);
-            List<Integer> keys = mergedKeySet.stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-
-//            List<Integer> keys = new ArrayList<>(fetchCountMap.keySet());
-//            keys.sort(Comparator.naturalOrder());
-
-            // Write CSV data
-            for (Integer time : keys) {
-                writer.append(String.format("%d,%d,%d,%d\n",
-                        time,
-                        fetchCountMap.getOrDefault(time, 0),
-                        sendCountMap.getOrDefault(time, 0),
-                        responseCountMap.getOrDefault(time, 0)));
-            }
-
-            System.out.println("CSV file has been created successfully!");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static Set<String> mergeSet(Set<String>... sets) {
+        return Arrays.stream(sets)
+                .flatMap(Collection::stream) // 각 Set을 Stream으로 변환한 후 flatMap으로 합칩니다.
+                .collect(Collectors.toCollection(() -> new ConcurrentSkipListSet<String>(Comparator.naturalOrder()))); // ConcurrentSkipListSet으로 수집합니다.
     }
 
-    public static void generateCsv(String fileName, Map<Integer, Integer> sendCountMap, Map<Integer, Integer> responseCountMap) {
-        System.out.println("fileName : " + fileName);
-        try (FileWriter writer = new FileWriter(fileName)) {
-            // Write CSV header
-            writer.append("Time,Fetch Count,Send Count,Response Count\n");
 
-            Set<Integer> fetchKeySet = sendCountMap.keySet();
-            Set<Integer> sendKeySet = sendCountMap.keySet();
-            Set<Integer> responseKeySet = sendCountMap.keySet();
+    public static void generateCsv(String filePath, String fileName, Map<String, Long> fetchCountMap, Map<String, Long> sendCountMap, Map<String, Long> responseCountMap) throws IOException {
+        Files.createDirectories(Path.of(filePath));
 
-            Set<Integer> mergedKeySet = new HashSet<Integer>(fetchKeySet);
-            mergedKeySet.addAll(sendKeySet);
-            mergedKeySet.addAll(responseKeySet);
-            List<Integer> keys = mergedKeySet.stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
+        filePath = String.join("/", filePath, fileName+".csv");
+        Set<String> times = CommonUtil.mergeSet(fetchCountMap.keySet(), sendCountMap.keySet(), responseCountMap.keySet());
 
-//            List<Integer> keys = new ArrayList<>(fetchCountMap.keySet());
-//            keys.sort(Comparator.naturalOrder());
+        try (FileWriter writer = new FileWriter(filePath)) {
+            writer.append("Time,Fetch Count,Send Count,Response Count\n");  // Write CSV header
 
             // Write CSV data
-            for (Integer time : keys) {
-                writer.append(String.format("%d,%d,%d\n",
+            for (String time : times) {
+                writer.append(String.format("%s,%s,%s,%s\n",
                         time,
-//                        fetchCountMap.getOrDefault(time, 0),
-                        sendCountMap.getOrDefault(time, 0),
-                        responseCountMap.getOrDefault(time, 0)));
+                        fetchCountMap.getOrDefault(time, 0L),
+                        sendCountMap.getOrDefault(time, 0L),
+                        responseCountMap.getOrDefault(time, 0L)));
             }
 
             System.out.println("CSV file has been created successfully!");
@@ -152,7 +99,33 @@ public class CommonUtil {
 
 
 
-    public static String getAnalyzedDataCsvFileName(String fileName) {
+    public static void generateCsv(String filePath, String fileName, Map<String, Double> saveIOTimeMap, Map<String, Double> updateIOTimeMap) throws IOException {
+        Files.createDirectories(Path.of(filePath));
+
+        filePath = String.join("/", filePath, fileName);
+        System.out.println("filePath :  " + filePath);
+        try (FileWriter writer = new FileWriter(filePath)) {
+            // Write CSV header
+            writer.append("Time, saveIOAvgTime, updateIoAvgTime\n");
+
+            Set<String> times = CommonUtil.mergeSet(saveIOTimeMap.keySet(), updateIOTimeMap.keySet());
+
+//             Write CSV data
+            for (String time : times) {
+                writer.append(String.format("%s,%.3f,%.3f\n",
+                        time,
+                        saveIOTimeMap.getOrDefault(time, 0D),
+                        updateIOTimeMap.getOrDefault(time, 0D)));
+            }
+
+            System.out.println("CSV file has been created successfully!");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getAnalyzedDataCsvFileName(String fileName, String filePath) {
         return String.join("/", Constants.ROOT_PATH, "csv", String.format("%s.csv", fileName));
     }
 
@@ -185,24 +158,29 @@ public class CommonUtil {
 
 
 
+    public static String exclusiveExtension(String fileName) {
+        return fileName.substring(0, fileName.lastIndexOf("."));
+    }
 
-    public static void writeTopContextCSV(List<TopContext> topContexts, String threadName, String directoryName) {
+    public static void  writeTopContextCSV(Collection<TopContext> topContexts, String threadName, String directoryName) {
         directoryName = directoryName.substring(0, directoryName.length() - 4);
         try {
-            String filePath = "/Users/simjeonghun/차세대 로그/test/agt";
+            String filePath = TOP_ROOT_PATH;
 
-            Path path = Path.of(String.format("%s/%s", filePath, directoryName));
+            Path path = Path.of(String.join("/", filePath, directoryName));
+            System.out.println("path : "+ path);
             if (!Files.exists(path)) {
                 Files.createDirectory(path);
             }
 
-
+            String threadCpuFilePath = String.join("/", filePath, directoryName, threadName + ".csv");
             if (!Files.exists(path)) {
-                path = Path.of(String.format("%s/%s/%s", filePath, directoryName, threadName + ".csv"));
+                path = Path.of(threadCpuFilePath);
                 Files.createFile(path);
             }
 
-            try (FileWriter writer = new FileWriter(String.format("%s/%s/%s", filePath, directoryName, threadName + ".csv"))) {
+            System.out.println("threadCpuFilePath : "+ threadCpuFilePath);
+            try (FileWriter writer = new FileWriter(threadCpuFilePath)) {
                 // CSV 헤더 작성
                 writer.append("Time,totalCpuUsage,CpuUsage\n");
 

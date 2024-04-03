@@ -76,23 +76,25 @@ public enum LogType {
 
     public void analyzeNewAgentLog(List<File> logFiles) {
         for (File logFile : logFiles) {
-            try {
-                System.out.printf("\"%s\" 디렉토리 안의 %s 파일 분석을 시작합니다.", logFile.getCanonicalPath(), logFile.getName());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            try {
-                List<String> rows = CommonUtil.readLinesFromFile(logFile.getPath());
-                int fetchCounts = CommonUtil.countingStringFromLogOnSec(rows, "result List size");
+//            try {
+                String fileName = CommonUtil.exclusiveExtension(logFile.getName());
+                String filePath = logFile.getPath().substring(logFile.getPath().lastIndexOf(fileName));
 
-                Map<Integer, Integer> fetchDatas = CommonUtil.analyzeStringFromOnSec(rows, "Fetcher fetch Data");
-                Map<Integer, Integer> sendDatas = CommonUtil.analyzeStringFromOnSec(rows, "Agent >>>>> MCMP");
-                Map<Integer, Integer> responseDatas = CommonUtil.analyzeStringFromOnSec(rows, "Agent <<<<< MCMP");
-
-                CommonUtil.generateCsv(String.join("/", NEW_AGENT_ROOT_PATH, "csv", logFile.getName().replace(".log", ".csv")), fetchDatas, sendDatas, responseDatas);
-            } catch (IOException e) {
-                System.out.println("분석 파일 생성 중 에러 발생");
-            }
+                System.out.println("fileName : "+ fileName + ", filePath : " + filePath);
+//                System.out.printf("\"%s\" 디렉토리 안의 %s 파일 분석을 시작합니다.", logFile.getCanonicalPath(), logFile.getName());
+//
+//                List<String> rows = CommonUtil.readLinesFromFile(logFile.getPath());
+//                int fetchCounts = CommonUtil.countingStringFromLogOnSec(rows, "result List size");
+//
+//                Map<Integer, Integer> fetchDatas = CommonUtil.analyzeStringFromOnSec(rows, "Fetcher fetch Data");
+//                Map<Integer, Integer> sendDatas = CommonUtil.analyzeStringFromOnSec(rows, "Agent >>>>> MCMP");
+//                Map<Integer, Integer> responseDatas = CommonUtil.analyzeStringFromOnSec(rows, "Agent <<<<< MCMP");
+//
+//                String
+//                CommonUtil.generateCsv(String.join("/", NEW_AGENT_ROOT_PATH, "csv", logFile.getName().replace(".log", ".csv")), fetchDatas, sendDatas, responseDatas);
+//            } catch (IOException e) {
+//                System.out.println("분석 파일 생성 중 에러 발생");
+//            }
 
         }
     }
