@@ -1,9 +1,0 @@
-package org.example.analyzeDataType;
-
-public enum TopDataType {
-    TOTAL_PROCESS_USE_CPU_PCT,
-    TOTAL_USE_MEMORY, TOTAL_USED_MEMORY, TOTAL_FREE_MEMORY,
-    THREAD_USE_CPU_PCT, THREAD_USE_MEMORY_PCT, THREAD_NAME;
-
-
-}

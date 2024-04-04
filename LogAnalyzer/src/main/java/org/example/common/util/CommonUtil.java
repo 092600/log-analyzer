@@ -1,7 +1,6 @@
 package org.example.common.util;
 
-import org.example.common.constants.Constants;
-import org.example.common.type.TopContext;
+import org.example.common.dto.TopContext;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -28,23 +27,38 @@ public class CommonUtil {
                 .collect(Collectors.toList());
     }
 
-    public static List<File> getDirectories(String parentDirectoryPath) {
-        File rootDir = new File(parentDirectoryPath);
+    public static List<File> getDirectoriesInFile(String filePath) {
         try {
-            Objects.requireNonNull(rootDir);
+            File rootDir = new File(filePath);
             File[] directories = Objects.requireNonNull(rootDir.listFiles());
 
             return Arrays.stream(directories)
                     .filter(File::isDirectory)
                     .collect(Collectors.toList());
         } catch (NullPointerException e) {
-            System.out.printf("\"%s\" 가 존재하지 않습니다.%n", parentDirectoryPath);
+            System.out.printf("\"%s\" 가 존재하지 않습니다.%n", filePath);
         }
 
         return null;
     }
 
-    public static String getInputText() {
+    public static List<File> getFilesInDirectory(String directoryPath) {
+        try {
+            File rootDir = new File(directoryPath);
+            File[] directories = Objects.requireNonNull(rootDir.listFiles());
+
+            return Arrays.stream(directories)
+                    .filter(File::isFile)
+                    .collect(Collectors.toList());
+        } catch (NullPointerException e) {
+            System.out.printf("\"%s\" 가 존재하지 않습니다.%n", directoryPath);
+        }
+
+        return null;
+    }
+
+    public static String getInputText(String text) {
+        System.out.printf("%s : ", text);
         return scanner.next();
     }
     public static List<File> getAgentThreadsUsageTopLogDirectories() {
@@ -53,18 +67,14 @@ public class CommonUtil {
                             .collect(Collectors.toList());
     }
 
-//    public static List<File> getMessageApiServerLogDirectories() {
-//        File rootDir = new File("/Users/simjeonghun/차세대 로그/MessageApiServerLogs");
-//        return Arrays.stream(rootDir.listFiles()).filter((file) -> file.exists() && file.isDirectory() && file.getName().contains("messageApiServer")).collect(Collectors.toList());
-//    }
-
 
     public static List<String> readLinesFromFile(String filePath) throws IOException {
         Path path = Paths.get(filePath);
         return Files.readAllLines(path, StandardCharsets.UTF_8);
     }
 
-    public static Set<String> mergeSet(Set<String>... sets) {
+    @SafeVarargs
+    public static ConcurrentSkipListSet<String> mergeToSortedSet(Set<String>... sets) {
         return Arrays.stream(sets)
                 .flatMap(Collection::stream) // 각 Set을 Stream으로 변환한 후 flatMap으로 합칩니다.
                 .collect(Collectors.toCollection(() -> new ConcurrentSkipListSet<String>(Comparator.naturalOrder()))); // ConcurrentSkipListSet으로 수집합니다.
@@ -75,7 +85,7 @@ public class CommonUtil {
         Files.createDirectories(Path.of(filePath));
 
         filePath = String.join("/", filePath, fileName+".csv");
-        Set<String> times = CommonUtil.mergeSet(fetchCountMap.keySet(), sendCountMap.keySet(), responseCountMap.keySet());
+        Set<String> times = CommonUtil.mergeToSortedSet(fetchCountMap.keySet(), sendCountMap.keySet(), responseCountMap.keySet());
 
         try (FileWriter writer = new FileWriter(filePath)) {
             writer.append("Time,Fetch Count,Send Count,Response Count\n");  // Write CSV header
@@ -103,12 +113,11 @@ public class CommonUtil {
         Files.createDirectories(Path.of(filePath));
 
         filePath = String.join("/", filePath, fileName);
-        System.out.println("filePath :  " + filePath);
         try (FileWriter writer = new FileWriter(filePath)) {
             // Write CSV header
             writer.append("Time, saveIOAvgTime, updateIoAvgTime\n");
 
-            Set<String> times = CommonUtil.mergeSet(saveIOTimeMap.keySet(), updateIOTimeMap.keySet());
+            Set<String> times = CommonUtil.mergeToSortedSet(saveIOTimeMap.keySet(), updateIOTimeMap.keySet());
 
 //             Write CSV data
             for (String time : times) {
@@ -125,37 +134,6 @@ public class CommonUtil {
         }
     }
 
-    public static String getAnalyzedDataCsvFileName(String fileName, String filePath) {
-        return String.join("/", Constants.ROOT_PATH, "csv", String.format("%s.csv", fileName));
-    }
-
-
-
-    public static int countingStringFromLogOnSec(List<String> logs, String searchString) {
-        return logs.parallelStream().filter((log) -> log.contains(searchString))
-                .mapToInt((log) -> Integer.parseInt(log.substring(log.indexOf(": ") + 2)))
-                .sum();
-    }
-
-
-    public static Map<Integer, Integer> analyzeStringFromOnSec(List<String> logs, String searchString) {
-        logs.stream().filter((log) -> log.contains(searchString))
-                .map((log) -> log.substring(0,21))
-                .map((log) -> log.substring(log.length()-10, log.length()-2))
-                .forEach(System.out::println);
-
-        return logs.stream().filter((log) -> log.contains(searchString))
-                .map((log) -> log.substring(0,21))
-                .map((log) -> log.substring(log.length()-10, log.length()-2))
-                .collect(HashMap::new, (map, key) -> map.merge(Integer.parseInt(String.join("", key.split(":"))), 1, Integer::sum), HashMap::putAll);
-    }
-
-
-
-
-
-
-
 
 
     public static String exclusiveExtension(String fileName) {
@@ -168,7 +146,6 @@ public class CommonUtil {
             String filePath = TOP_ROOT_PATH;
 
             Path path = Path.of(String.join("/", filePath, directoryName));
-            System.out.println("path : "+ path);
             if (!Files.exists(path)) {
                 Files.createDirectory(path);
             }
@@ -179,18 +156,12 @@ public class CommonUtil {
                 Files.createFile(path);
             }
 
-            System.out.println("threadCpuFilePath : "+ threadCpuFilePath);
             try (FileWriter writer = new FileWriter(threadCpuFilePath)) {
                 // CSV 헤더 작성
                 writer.append("Time,totalCpuUsage,CpuUsage\n");
 
                 // resultMap 반복
                 for (TopContext topContext : topContexts) {
-
-//                        double cpuUsage =  Float.valueOf(Objects.requireNonNullElse(topContext.getCpuUsage(), "0,0")) / Float.valueOf(Objects.requireNonNullElse(topContext.getTotalCpuUsage(), "0.0"));
-                        //                    Float.valueOf(topContext.getTotalCpuUsage());
-                        //                    Float.valueOf(topContext.getCpuUsage());
-//                        String cpuUsageStr = String.valueOf(cpuUsage);
                     writer.append(String.join(",", topContext.getTime(), topContext.getTotalCpuUsage(), topContext.getCpuUsage()));
                     writer.append("\n");
                 }
@@ -205,4 +176,8 @@ public class CommonUtil {
 
     }
 
+    public static int getNumberInput(String text) {
+        System.out.printf("%s : ", text);
+        return scanner.nextInt();
+    }
 }

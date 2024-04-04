@@ -1,4 +1,4 @@
-package org.example.common.type;
+package org.example.common.dto;
 
 public class TopContext {
     private String time;

@@ -1,7 +1,5 @@
 package org.example.analyzer;
 
-import org.example.dto.SpecificStringCnt;
-
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -10,26 +8,7 @@ import java.util.stream.Collectors;
 
 public class Analyzer {
 
-    public static Pattern ioParsingPattern = Pattern.compile("\\[(\\d+ms)]");
-
-
-    public Map<String, Long> countFetchSizeBySec(List<String> logs, String searchString) {
-        // -> 2024-04-01 13:29:09.581  INFO(1859646)[mover-scheduling-1] [k.s.ums.service.SmsService:454] [SMS Mover] result List size : 2
-        return logs.parallelStream()
-                .filter((log) -> log.contains(searchString))
-                .map((log) -> {
-                    String[] arr = log.split("\\s+");
-
-                    String time = arr[1];
-                    String fetchSize = arr[arr.length];
-
-                    return new AbstractMap.SimpleEntry<>(time, fetchSize);
-                })
-                .collect(Collectors.groupingBy(
-                        AbstractMap.SimpleEntry::getKey, // 시간 값을 기준으로 그룹화합니다.
-                        Collectors.counting() // 각 그룹의 개수를 카운팅합니다.
-                ));
-    }
+    private static Pattern dbioParsingPattern = Pattern.compile("\\[(\\d+ms)]");
 
     public Map<String, Long> analyzeStringFromOnSec(List<String> logs, String searchString) {
         return logs.parallelStream()
@@ -72,7 +51,7 @@ public class Analyzer {
                     String time = arr[1];
                     String sec = time.substring(0, time.lastIndexOf(".") + 2);
 
-                    Matcher matcher = ioParsingPattern.matcher(log);
+                    Matcher matcher = dbioParsingPattern.matcher(log);
                     long ioTime = matcher.find() ? Long.parseLong(matcher.group(1).replaceAll("ms", "")) : 0L;
 
                     return new AbstractMap.SimpleEntry<>(sec, ioTime);
