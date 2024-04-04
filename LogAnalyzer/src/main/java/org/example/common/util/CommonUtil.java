@@ -99,7 +99,7 @@ public class CommonUtil {
                         responseCountMap.getOrDefault(time, 0L)));
             }
 
-            System.out.println("CSV file has been created successfully!");
+            System.out.printf("Successfully created : %s\n", filePath);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -127,8 +127,7 @@ public class CommonUtil {
                         updateIOTimeMap.getOrDefault(time, 0D)));
             }
 
-            System.out.println("CSV file has been created successfully!");
-
+            System.out.printf("Successfully created : %s\n", filePath);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -167,6 +166,7 @@ public class CommonUtil {
                 }
 
                 writer.flush();
+                System.out.printf("Successfully created : %s\n", threadCpuFilePath);
             } catch (IOException e) {
                 e.printStackTrace();
             }
