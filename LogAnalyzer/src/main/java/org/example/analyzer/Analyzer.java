@@ -109,24 +109,4 @@ public class Analyzer {
 
         return resultMap;
     }
-
-//    public Map<Integer, Integer> analyzeDbIOAVGFromOnSec(List<String> logs, String searchString) {
-//        logs.stream().filter((log) -> log.contains(searchString)).forEach(log -> {
-//                    String datetimeAll = log.substring(0,21);
-//                    String datetime = log.substring(0,21);
-//                    datetime.substring(datetime.length()-10, datetime.length()-2);
-//                    System.out.println(datetime);
-//                });
-////                .map((log) -> )
-////                .map((log) -> log.substring(log.length()-10, log.length()-2))
-//
-////                .collect(HashMap::new, (map, key) -> map.merge(Integer.parseInt(String.join("", key.split(":"))), 1, Integer::sum), HashMap::putAll);
-//    }
-
-
-
-
-
-
-
 }

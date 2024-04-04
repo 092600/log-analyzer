@@ -75,12 +75,6 @@ public class AgentAnalyzer {
     }
 
 
-    public static String junghunbabo()    {
-        //From Jung ho
-        return "SimJungHunBaBo";
-
-    }
-
     public static void analyzeDBIONewAgentLogFileAndCreateCsvFile() throws IOException {
         // Files :: AGT.log, AGT1.log, AGT2.log, AGT3.log...
         List<File> agentLogFiles = CommonUtil.getAgentLogDirectories().stream()
